@@ -87,9 +87,9 @@ Then configure TanStack Start's Vite plugin in `vite.config.ts`:
 
 ```ts
 // vite.config.ts
-import { defineConfig } from 'vite'
-import { tanstackStart } from '@tanstack/solid-start/plugin/vite'
-import viteSolid from 'vite-plugin-solid'
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/solid-start/plugin/vite";
+import viteSolid from "vite-plugin-solid";
 
 export default defineConfig({
   server: {
@@ -103,7 +103,7 @@ export default defineConfig({
     // solid's vite plugin must come after start's vite plugin
     viteSolid({ ssr: true }),
   ],
-})
+});
 ```
 
 ## Add the Basic Templating
@@ -137,18 +137,31 @@ from the default [preloading functionality](/router/latest/docs/framework/solid/
 
 ```tsx
 // src/router.tsx
-import { createRouter } from '@tanstack/solid-router'
-import { routeTree } from './routeTree.gen'
+import { createRouter } from "@tanstack/solid-router";
+import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
   const router = createRouter({
     routeTree,
     scrollRestoration: true,
-  })
+  });
 
-  return router
+  return router;
 }
 ```
+
+Then register the router's type by augmenting the `Register` interface from `@tanstack/solid-router`. This makes `<Link>`, `useNavigate`, and the [route hooks](/router/latest/docs/framework/solid/guide/type-safety) aware of your routes, params, and search schemas:
+
+```tsx
+declare module "@tanstack/solid-router" {
+  interface Register {
+    router: ReturnType<typeof getRouter>;
+  }
+}
+```
+
+> [!NOTE]
+> `Register` is a TypeScript-only construct. Skipping this declaration doesn't break the build, but `<Link to="...">` will accept any string and route data hooks will lose their inferred types.
 
 ## The Root of Your Application
 
@@ -157,39 +170,39 @@ Finally, we need to create the root of our application. This is the entry point 
 ```tsx
 // src/routes/__root.tsx
 /// <reference types="vite/client" />
-import * as Solid from 'solid-js'
+import * as Solid from "solid-js";
 import {
   Outlet,
   createRootRoute,
   HeadContent,
   Scripts,
-} from '@tanstack/solid-router'
-import { HydrationScript } from 'solid-js/web'
+} from "@tanstack/solid-router";
+import { HydrationScript } from "solid-js/web";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
       },
       {
-        title: 'TanStack Start Starter',
+        title: "TanStack Start Starter",
       },
     ],
   }),
   component: RootComponent,
-})
+});
 
 function RootComponent() {
   return (
     <RootDocument>
       <Outlet />
     </RootDocument>
-  )
+  );
 }
 
 function RootDocument({ children }: Readonly<{ children: Solid.JSX.Element }>) {
@@ -204,7 +217,7 @@ function RootDocument({ children }: Readonly<{ children: Solid.JSX.Element }>) {
         <Scripts />
       </body>
     </html>
-  )
+  );
 }
 ```
 
@@ -213,52 +226,52 @@ function RootDocument({ children }: Readonly<{ children: Solid.JSX.Element }>) {
 Now that we have the basic templating setup, we can write our first route. This is done by creating a new file in the `src/routes` directory.
 
 ```tsx
-import * as fs from 'node:fs'
-import { createFileRoute, useRouter } from '@tanstack/solid-router'
-import { createServerFn } from '@tanstack/solid-start'
+import * as fs from "node:fs";
+import { createFileRoute, useRouter } from "@tanstack/solid-router";
+import { createServerFn } from "@tanstack/solid-start";
 
-const filePath = 'count.txt'
+const filePath = "count.txt";
 
 async function readCount() {
   return parseInt(
-    await fs.promises.readFile(filePath, 'utf-8').catch(() => '0'),
-  )
+    await fs.promises.readFile(filePath, "utf-8").catch(() => "0"),
+  );
 }
 
 const getCount = createServerFn({
-  method: 'GET',
+  method: "GET",
 }).handler(() => {
-  return readCount()
-})
+  return readCount();
+});
 
-const updateCount = createServerFn({ method: 'POST' })
+const updateCount = createServerFn({ method: "POST" })
   .inputValidator((d: number) => d)
   .handler(async ({ data }) => {
-    const count = await readCount()
-    await fs.promises.writeFile(filePath, `${count + data}`)
-  })
+    const count = await readCount();
+    await fs.promises.writeFile(filePath, `${count + data}`);
+  });
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: Home,
   loader: async () => await getCount(),
-})
+});
 
 function Home() {
-  const router = useRouter()
-  const state = Route.useLoaderData()
+  const router = useRouter();
+  const state = Route.useLoaderData();
 
   return (
     <button
       type="button"
       onClick={() => {
         updateCount({ data: 1 }).then(() => {
-          router.invalidate()
-        })
+          router.invalidate();
+        });
       }}
     >
       Add 1 to {state()}?
     </button>
-  )
+  );
 }
 ```
 
